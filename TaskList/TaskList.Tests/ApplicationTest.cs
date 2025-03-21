@@ -118,6 +118,41 @@ namespace Tasks
 			Execute("quit");
 		}
 
+		[Test, Timeout(1000)]
+		public void TodayCommandsWork()
+		{
+			Execute("add project project1");
+			Execute("add task project1 Task 1");
+			Execute("add task project1 Task 2");
+			Execute("add project project2");
+			Execute("add task project2 Task 3");
+
+			// Set deadline for Task 1 to today
+			Execute("deadline 1 " + DateTime.Today.ToString("dd-MM-yyyy"));
+			ReadLines("Deadline set for task 1.");
+
+			// Set deadline for Task 2 to tomorrow
+			Execute("deadline 2 " + DateTime.Today.AddDays(1).ToString("dd-MM-yyyy"));
+			ReadLines("Deadline set for task 2.");
+
+			// Set deadline for Task 3 to today
+			Execute("deadline 3 " + DateTime.Today.ToString("dd-MM-yyyy"));
+			ReadLines("Deadline set for task 3.");
+
+			// Check today's tasks
+			Execute("today");
+			ReadLines(
+				"project1",
+				"    [ ] 1: Task 1, ",
+				"",
+				"project2", 
+				"    [ ] 3: Task 3, ",
+				""
+			);
+
+			Execute("quit");
+		}
+
 		private void Execute(string command)
 		{
 			Read(PROMPT);

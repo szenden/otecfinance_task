@@ -60,6 +60,9 @@ namespace TaskList
 			case "deadline":
 				SetDeadline(commandRest[1]);
 				break;
+			case "today":
+				ShowToday();
+				break;				
 			default:
 				Error(command);
 				break;
@@ -165,6 +168,32 @@ namespace TaskList
             console.WriteLine("Deadline set for task {0}.", id);
         }
 
+        private void ShowToday()
+        {
+            var today = DateTime.Today;
+            var hasTasksForToday = false;
+
+            foreach (var project in tasks)
+            {
+                var todayTasks = project.Value.Where(t => t.Deadline?.Date == today).ToList();
+                if (todayTasks.Any())
+                {
+                    hasTasksForToday = true;
+                    console.WriteLine(project.Key);
+                    foreach (var task in todayTasks)
+                    {
+                        console.WriteLine("    [{0}] {1}: {2}, ", (task.Done ? 'x' : ' '), task.Id, task.Description);
+                    }
+                    console.WriteLine();
+                }
+            }
+
+            if (!hasTasksForToday)
+            {
+                console.WriteLine("No tasks due today.");
+            }
+        }
+
 		private void Help()
 		{
 			console.WriteLine("Commands:");
@@ -174,6 +203,7 @@ namespace TaskList
 			console.WriteLine("  check <task ID>");
 			console.WriteLine("  uncheck <task ID>");
 			console.WriteLine("  deadline <task ID> <date>");
+			console.WriteLine("  today");
 			console.WriteLine();
 		}
 
