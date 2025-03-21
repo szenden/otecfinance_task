@@ -174,14 +174,18 @@ namespace Tasks
 			Execute("view-by-deadline");
 			ReadLines(
 				DateTime.Today.AddDays(-2).ToString("dd-MM-yyyy") + ":",
-				"    4: Task with past deadline",
+				"    project2:",
+				"        4: Task with past deadline",
 				"",
 				DateTime.Today.AddDays(5).ToString("dd-MM-yyyy") + ":",
-				"    2: Task with future deadline",
+				"    project1:",
+				"        2: Task with future deadline",
 				"",
 				"No deadline:",
-				"    1: Task with no deadline",
-				"    3: Another task with no deadline",
+				"    project1:",
+				"        1: Task with no deadline",
+				"    project2:",
+				"        3: Another task with no deadline",
 				""
 			);
 

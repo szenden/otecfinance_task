@@ -80,7 +80,8 @@ namespace TaskList
 			foreach (var project in tasks)
 			{
 				console.WriteLine(project.Key);
-				foreach (var task in project.Value) {
+				foreach (var task in project.Value)
+				{
 					console.WriteLine("    [{0}] {1}: {2}", (task.Done ? 'x' : ' '), task.Id, task.Description);
 				}
 				console.WriteLine();
@@ -91,9 +92,12 @@ namespace TaskList
 		{
 			var subcommandRest = commandLine.Split(" ".ToCharArray(), 2);
 			var subcommand = subcommandRest[0];
-			if (subcommand == "project") {
+			if (subcommand == "project")
+			{
 				AddProject(subcommandRest[1]);
-			} else if (subcommand == "task") {
+			}
+			else if (subcommand == "task")
+			{
 				var projectTask = subcommandRest[1].Split(" ".ToCharArray(), 2);
 				AddTask(projectTask[0], projectTask[1]);
 			}
@@ -131,7 +135,8 @@ namespace TaskList
 				.Select(project => project.Value.FirstOrDefault(task => task.Id == id))
 				.Where(task => task != null)
 				.FirstOrDefault();
-			if (identifiedTask == null) {
+			if (identifiedTask == null)
+			{
 				console.WriteLine("Could not find a task with an ID of {0}.", id);
 				return;
 			}
@@ -234,20 +239,29 @@ namespace TaskList
 				.OrderBy(g => g.Key == null) // Put null deadlines last
 				.ThenBy(g => g.Key); // Order by date
 
-			foreach (var group in tasksByDeadline)
+			foreach (var deadlineGroup in tasksByDeadline)
 			{
-				if (group.Key == null)
+				if (deadlineGroup.Key == null)
 				{
 					console.WriteLine("No deadline:");
 				}
 				else
 				{
-					console.WriteLine($"{group.Key.Value:dd-MM-yyyy}:");
+					console.WriteLine($"{deadlineGroup.Key.Value:dd-MM-yyyy}:");
 				}
 
-				foreach (var task in group.OrderBy(x => x.task.Id))
+				// Group tasks by project within each deadline
+				var tasksByProject = deadlineGroup
+					.GroupBy(x => x.Key)
+					.OrderBy(g => g.Key);
+
+				foreach (var projectGroup in tasksByProject)
 				{
-					console.WriteLine($"    {task.task.Id}: {task.task.Description}");
+					console.WriteLine($"    {projectGroup.Key}:");
+					foreach (var task in projectGroup.OrderBy(x => x.task.Id))
+					{
+						console.WriteLine($"        {task.task.Id}: {task.task.Description}");
+					}
 				}
 				console.WriteLine();
 			}
