@@ -145,8 +145,43 @@ namespace Tasks
 				"project1",
 				"    [ ] 1: Task 1, ",
 				"",
-				"project2", 
+				"project2",
 				"    [ ] 3: Task 3, ",
+				""
+			);
+
+			Execute("quit");
+		}
+
+		[Test, Timeout(1000)]
+		public void ViewByDeadlineCommandWorks()
+		{
+			// Create projects and tasks
+			Execute("add project project1");
+			Execute("add task project1 Task with no deadline"); // ID: 1
+			Execute("add task project1 Task with future deadline"); // ID: 2
+			Execute("add project project2");
+			Execute("add task project2 Another task with no deadline"); // ID: 3
+			Execute("add task project2 Task with past deadline"); // ID: 4
+
+			// Set deadlines for some tasks
+			Execute("deadline 2 " + DateTime.Today.AddDays(5).ToString("dd-MM-yyyy")); // Future deadline
+			ReadLines("Deadline set for task 2.");
+			Execute("deadline 4 " + DateTime.Today.AddDays(-2).ToString("dd-MM-yyyy")); // Past deadline
+			ReadLines("Deadline set for task 4.");
+
+			// Test view-by-deadline command
+			Execute("view-by-deadline");
+			ReadLines(
+				DateTime.Today.AddDays(-2).ToString("dd-MM-yyyy") + ":",
+				"    4: Task with past deadline",
+				"",
+				DateTime.Today.AddDays(5).ToString("dd-MM-yyyy") + ":",
+				"    2: Task with future deadline",
+				"",
+				"No deadline:",
+				"    1: Task with no deadline",
+				"    3: Another task with no deadline",
 				""
 			);
 

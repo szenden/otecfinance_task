@@ -27,10 +27,12 @@ namespace TaskList
 		public void Run()
 		{
 			console.WriteLine(startupText);
-			while (true) {
+			while (true)
+			{
 				console.Write("> ");
 				var command = console.ReadLine();
-				if (command == QUIT) {
+				if (command == QUIT)
+				{
 					break;
 				}
 				Execute(command);
@@ -41,37 +43,42 @@ namespace TaskList
 		{
 			var commandRest = commandLine.Split(" ".ToCharArray(), 2);
 			var command = commandRest[0];
-			switch (command) {
-			case "show":
-				Show();
-				break;
-			case "add":
-				Add(commandRest[1]);
-				break;
-			case "check":
-				Check(commandRest[1]);
-				break;
-			case "uncheck":
-				Uncheck(commandRest[1]);
-				break;
-			case "help":
-				Help();
-				break;
-			case "deadline":
-				SetDeadline(commandRest[1]);
-				break;
-			case "today":
-				ShowToday();
-				break;				
-			default:
-				Error(command);
-				break;
+			switch (command)
+			{
+				case "show":
+					Show();
+					break;
+				case "add":
+					Add(commandRest[1]);
+					break;
+				case "check":
+					Check(commandRest[1]);
+					break;
+				case "uncheck":
+					Uncheck(commandRest[1]);
+					break;
+				case "help":
+					Help();
+					break;
+				case "deadline":
+					SetDeadline(commandRest[1]);
+					break;
+				case "today":
+					ShowToday();
+					break;
+				case "view-by-deadline":
+					ViewByDeadline();
+					break;
+				default:
+					Error(command);
+					break;
 			}
 		}
 
 		private void Show()
 		{
-			foreach (var project in tasks) {
+			foreach (var project in tasks)
+			{
 				console.WriteLine(project.Key);
 				foreach (var task in project.Value) {
 					console.WriteLine("    [{0}] {1}: {2}", (task.Done ? 'x' : ' '), task.Id, task.Description);
@@ -132,67 +139,67 @@ namespace TaskList
 			identifiedTask.Done = done;
 		}
 
-        private void SetDeadline(string commandLine)
-        {
-            var parts = commandLine.Split(" ".ToCharArray(), 2);
-            if (parts.Length != 2)
-            {
-                console.WriteLine("Invalid deadline command. Use: deadline <ID> <date>");
-                return;
-            }
+		private void SetDeadline(string commandLine)
+		{
+			var parts = commandLine.Split(" ".ToCharArray(), 2);
+			if (parts.Length != 2)
+			{
+				console.WriteLine("Invalid deadline command. Use: deadline <ID> <date>");
+				return;
+			}
 
-            if (!long.TryParse(parts[0], out long id))
-            {
-                console.WriteLine("Invalid task ID.");
-                return;
-            }
+			if (!long.TryParse(parts[0], out long id))
+			{
+				console.WriteLine("Invalid task ID.");
+				return;
+			}
 
-            if (!DateTime.TryParseExact(parts[1], "dd-MM-yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime deadline))
-            {
-                console.WriteLine("Invalid date format. Use DD-MM-YYYY");
-                return;
-            }
+			if (!DateTime.TryParseExact(parts[1], "dd-MM-yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime deadline))
+			{
+				console.WriteLine("Invalid date format. Use DD-MM-YYYY");
+				return;
+			}
 
-            var identifiedTask = tasks
-                .Select(project => project.Value.FirstOrDefault(task => task.Id == id))
-                .Where(task => task != null)
-                .FirstOrDefault();
+			var identifiedTask = tasks
+				.Select(project => project.Value.FirstOrDefault(task => task.Id == id))
+				.Where(task => task != null)
+				.FirstOrDefault();
 
-            if (identifiedTask == null)
-            {
-                console.WriteLine("Could not find a task with an ID of {0}.", id);
-                return;
-            }
+			if (identifiedTask == null)
+			{
+				console.WriteLine("Could not find a task with an ID of {0}.", id);
+				return;
+			}
 
-            identifiedTask.Deadline = deadline;
-            console.WriteLine("Deadline set for task {0}.", id);
-        }
+			identifiedTask.Deadline = deadline;
+			console.WriteLine("Deadline set for task {0}.", id);
+		}
 
-        private void ShowToday()
-        {
-            var today = DateTime.Today;
-            var hasTasksForToday = false;
+		private void ShowToday()
+		{
+			var today = DateTime.Today;
+			var hasTasksForToday = false;
 
-            foreach (var project in tasks)
-            {
-                var todayTasks = project.Value.Where(t => t.Deadline?.Date == today).ToList();
-                if (todayTasks.Any())
-                {
-                    hasTasksForToday = true;
-                    console.WriteLine(project.Key);
-                    foreach (var task in todayTasks)
-                    {
-                        console.WriteLine("    [{0}] {1}: {2}, ", (task.Done ? 'x' : ' '), task.Id, task.Description);
-                    }
-                    console.WriteLine();
-                }
-            }
+			foreach (var project in tasks)
+			{
+				var todayTasks = project.Value.Where(t => t.Deadline?.Date == today).ToList();
+				if (todayTasks.Any())
+				{
+					hasTasksForToday = true;
+					console.WriteLine(project.Key);
+					foreach (var task in todayTasks)
+					{
+						console.WriteLine("    [{0}] {1}: {2}, ", (task.Done ? 'x' : ' '), task.Id, task.Description);
+					}
+					console.WriteLine();
+				}
+			}
 
-            if (!hasTasksForToday)
-            {
-                console.WriteLine("No tasks due today.");
-            }
-        }
+			if (!hasTasksForToday)
+			{
+				console.WriteLine("No tasks due today.");
+			}
+		}
 
 		private void Help()
 		{
@@ -204,6 +211,7 @@ namespace TaskList
 			console.WriteLine("  uncheck <task ID>");
 			console.WriteLine("  deadline <task ID> <date>");
 			console.WriteLine("  today");
+			console.WriteLine("  view-by-deadline");
 			console.WriteLine();
 		}
 
@@ -215,6 +223,34 @@ namespace TaskList
 		private long NextId()
 		{
 			return ++lastId;
+		}
+
+		private void ViewByDeadline()
+		{
+			// Group tasks by deadline
+			var tasksByDeadline = tasks
+				.SelectMany(project => project.Value.Select(task => new { task, project.Key }))
+				.GroupBy(x => x.task.Deadline)
+				.OrderBy(g => g.Key == null) // Put null deadlines last
+				.ThenBy(g => g.Key); // Order by date
+
+			foreach (var group in tasksByDeadline)
+			{
+				if (group.Key == null)
+				{
+					console.WriteLine("No deadline:");
+				}
+				else
+				{
+					console.WriteLine($"{group.Key.Value:dd-MM-yyyy}:");
+				}
+
+				foreach (var task in group.OrderBy(x => x.task.Id))
+				{
+					console.WriteLine($"    {task.task.Id}: {task.task.Description}");
+				}
+				console.WriteLine();
+			}
 		}
 	}
 }
