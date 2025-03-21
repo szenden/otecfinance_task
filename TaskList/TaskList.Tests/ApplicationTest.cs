@@ -81,6 +81,43 @@ namespace Tasks
 			Execute("quit");
 		}
 
+		[Test, Timeout(1000)]
+		public void DeadlineCommandsWork()
+		{
+			Execute("add project project1");
+			Execute("add task project1 Task 1");
+			Execute("add task project1 Task 2");
+			Execute("add project project2");
+			Execute("add task project2 Task 3");
+
+			// Set deadline for Task 1 to today
+			Execute("deadline 1 " + DateTime.Today.ToString("dd-MM-yyyy"));
+			ReadLines("Deadline set for task 1.");
+
+			// Set deadline for Task 2 to tomorrow
+			Execute("deadline 2 " + DateTime.Today.AddDays(1).ToString("dd-MM-yyyy"));
+			ReadLines("Deadline set for task 2.");
+
+			// Set deadline for Task 3 to today
+			Execute("deadline 3 " + DateTime.Today.ToString("dd-MM-yyyy"));
+			ReadLines("Deadline set for task 3.");
+
+
+			// Test invalid deadline command
+			Execute("deadline invalid");
+			ReadLines("Invalid deadline command. Use: deadline <ID> <date>");
+
+			// Test invalid date format
+			Execute("deadline 1 2024-11-25");
+			ReadLines("Invalid date format. Use DD-MM-YYYY");
+
+			// Test non-existent task
+			Execute("deadline 999 25-11-2024");
+			ReadLines("Could not find a task with an ID of 999.");
+
+			Execute("quit");
+		}
+
 		private void Execute(string command)
 		{
 			Read(PROMPT);

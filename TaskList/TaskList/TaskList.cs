@@ -57,6 +57,9 @@ namespace TaskList
 			case "help":
 				Help();
 				break;
+			case "deadline":
+				SetDeadline(commandRest[1]);
+				break;
 			default:
 				Error(command);
 				break;
@@ -126,6 +129,42 @@ namespace TaskList
 			identifiedTask.Done = done;
 		}
 
+        private void SetDeadline(string commandLine)
+        {
+            var parts = commandLine.Split(" ".ToCharArray(), 2);
+            if (parts.Length != 2)
+            {
+                console.WriteLine("Invalid deadline command. Use: deadline <ID> <date>");
+                return;
+            }
+
+            if (!long.TryParse(parts[0], out long id))
+            {
+                console.WriteLine("Invalid task ID.");
+                return;
+            }
+
+            if (!DateTime.TryParseExact(parts[1], "dd-MM-yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime deadline))
+            {
+                console.WriteLine("Invalid date format. Use DD-MM-YYYY");
+                return;
+            }
+
+            var identifiedTask = tasks
+                .Select(project => project.Value.FirstOrDefault(task => task.Id == id))
+                .Where(task => task != null)
+                .FirstOrDefault();
+
+            if (identifiedTask == null)
+            {
+                console.WriteLine("Could not find a task with an ID of {0}.", id);
+                return;
+            }
+
+            identifiedTask.Deadline = deadline;
+            console.WriteLine("Deadline set for task {0}.", id);
+        }
+
 		private void Help()
 		{
 			console.WriteLine("Commands:");
@@ -134,6 +173,7 @@ namespace TaskList
 			console.WriteLine("  add task <project name> <task description>");
 			console.WriteLine("  check <task ID>");
 			console.WriteLine("  uncheck <task ID>");
+			console.WriteLine("  deadline <task ID> <date>");
 			console.WriteLine();
 		}
 
