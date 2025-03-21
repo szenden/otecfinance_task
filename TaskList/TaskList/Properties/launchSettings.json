@@ -30,7 +30,12 @@
     },
     "CLI": {
       "commandName": "Project",
-      "commandLineArgs": "--cli"
+      "commandLineArgs": "--cli",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
     }
   },
   "$schema": "http://json.schemastore.org/launchsettings.json",
