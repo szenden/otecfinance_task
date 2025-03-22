@@ -6,9 +6,9 @@ namespace TaskList.Core.Models.Commands
     public class AddTaskCommand : BaseCommand
     {
         /// <summary>
-        /// Gets the name of the project to add the task to.
+        /// Gets the ID of the project to add the task to.
         /// </summary>
-        public string ProjectName { get; }
+        public long ProjectId { get; }
 
         /// <summary>
         /// Gets the description of the task to be created.
@@ -18,11 +18,11 @@ namespace TaskList.Core.Models.Commands
         /// <summary>
         /// Initializes a new instance of the AddTaskCommand class.
         /// </summary>
-        /// <param name="projectName">The name of the project to add the task to.</param>
+        /// <param name="projectId">The ID of the project to add the task to.</param>
         /// <param name="description">The description of the task to create.</param>
-        public AddTaskCommand(string projectName, string description) : base("add_task")
+        public AddTaskCommand(long projectId, string description) : base("add_task")
         {
-            ProjectName = projectName;
+            ProjectId = projectId;
             Description = description;
         }
     }

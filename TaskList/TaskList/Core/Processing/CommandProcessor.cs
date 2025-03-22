@@ -88,7 +88,7 @@ namespace TaskList.Core.Processing
             BaseCommand command = parts[0].ToLower() switch
             {
                 "project" => new AddProjectCommand(parts[1]),
-                "task" => ParseAddTaskCommand(parts[1]),
+                "task" => await ParseAddTaskCommand(parts[1]),
                 _ => throw new ArgumentException($"Unknown add command type: {parts[0]}")
             };
 
@@ -210,7 +210,7 @@ namespace TaskList.Core.Processing
         /// <param name="args">The arguments to parse.</param>
         /// <returns>A command object representing the add task operation.</returns>
         /// <exception cref="ArgumentException">Thrown when the command format is invalid.</exception>
-        private BaseCommand ParseAddTaskCommand(string args)
+        private async Task<BaseCommand> ParseAddTaskCommand(string args)
         {
             var parts = args.Split(" ".ToCharArray(), 2);
             if (parts.Length < 2)
@@ -218,7 +218,15 @@ namespace TaskList.Core.Processing
                 throw new ArgumentException("Invalid add task command format");
             }
 
-            return new AddTaskCommand(parts[0], parts[1]);
+            var projectName = parts[0];
+            var projects = await _taskService.GetAllProjectsAsync();
+            var project = projects.FirstOrDefault(p => p.Name == projectName);
+            if (project == null)
+            {
+                throw new ArgumentException($"Project '{projectName}' not found");
+            }
+
+            return new AddTaskCommand(project.Id, parts[1]);
         }
     }
 }

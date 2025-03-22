@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using TaskList.Core.Models;
 using TaskList.Core.Models.Commands;
@@ -64,14 +61,20 @@ namespace TaskList.Interfaces.Web.Controllers
         /// <summary>
         /// Creates a new task in the specified project.
         /// </summary>
-        /// <param name="request">The task creation request containing project name and task description.</param>
+        /// <param name="request">The task creation request containing project ID and task description.</param>
         /// <returns>The newly created task.</returns>
         /// <response code="200">Returns the newly created task.</response>
         /// <response code="400">If the task creation fails.</response>
         [HttpPost("tasks")]
         public async Task<ActionResult<TaskDto>> AddTask([FromBody] AddTaskRequest request)
         {
-            var command = new AddTaskCommand(request.ProjectName, request.Description);
+            var project = _taskService.GetProject(request.ProjectId);
+            if (project == null)
+            {
+                return BadRequest($"Project with ID {request.ProjectId} not found");
+            }
+
+            var command = new AddTaskCommand(request.ProjectId, request.Description);
             var result = await _taskService.ExecuteCommandAsync(command);
 
             if (!result.Success)
@@ -79,10 +82,9 @@ namespace TaskList.Interfaces.Web.Controllers
                 return BadRequest(result.Error);
             }
 
-            var projects = await _taskService.GetAllProjectsAsync();
-            var project = projects.First(p => p.Name == request.ProjectName);
-            var task = project.Tasks.Last();
-            return Ok(MapToTaskDto(task));
+            var updatedProject = _taskService.GetProject(request.ProjectId);
+            var newTask = updatedProject.Tasks.Last();
+            return Ok(MapToTaskDto(newTask));
         }
 
         /// <summary>

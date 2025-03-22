@@ -4,7 +4,7 @@ namespace TaskList.Interfaces.Web.DTOs
 {
     /// <summary>
     /// Data transfer object for task information.
-    /// Used to transfer task data between the API and clients.
+    /// Used to send task data to API clients.
     /// </summary>
     public class TaskDto
     {

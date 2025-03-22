@@ -13,8 +13,9 @@ namespace TaskList.Core.Services
     /// </summary>
     public class TaskService : ITaskService
     {
-        private readonly IDictionary<string, Project> _projects = new Dictionary<string, Project>();
-        private long _lastId = 0;
+        private readonly IDictionary<long, Project> _projects = new Dictionary<long, Project>();
+        private long _lastProjectId = 0;
+        private long _lastTaskId = 0;
 
         /// <summary>
         /// Creates a new project with the specified name.
@@ -24,31 +25,58 @@ namespace TaskList.Core.Services
         /// <exception cref="InvalidOperationException">Thrown when a project with the same name already exists.</exception>
         public async Task<Project> AddProjectAsync(string projectName)
         {
-            if (_projects.ContainsKey(projectName))
+            if (_projects.Values.Any(p => p.Name == projectName))
             {
                 throw new InvalidOperationException($"Project '{projectName}' already exists.");
             }
 
             var project = new Project(projectName);
-            _projects[projectName] = project;
+            project.Id = NextProjectId();
+            _projects[project.Id] = project;
             return await Task.FromResult(project);
+        }
+
+        /// <summary>
+        /// Adds a new project to the system.
+        /// </summary>
+        /// <param name="project">The project to add.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        public async Task AddProject(Project project)
+        {
+            if (_projects.ContainsKey(project.Id))
+            {
+                throw new InvalidOperationException($"Project with ID {project.Id} already exists.");
+            }
+
+            _projects[project.Id] = project;
+            await Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Retrieves a project by its unique identifier.
+        /// </summary>
+        /// <param name="projectId">The unique identifier of the project.</param>
+        /// <returns>The project with the specified ID, or null if not found.</returns>
+        public Project GetProject(long projectId)
+        {
+            return _projects.TryGetValue(projectId, out var project) ? project : null;
         }
 
         /// <summary>
         /// Adds a new task to the specified project.
         /// </summary>
-        /// <param name="projectName">The name of the project to add the task to.</param>
+        /// <param name="projectId">The ID of the project to add the task to.</param>
         /// <param name="description">The description of the task.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the newly created task.</returns>
         /// <exception cref="InvalidOperationException">Thrown when the specified project does not exist.</exception>
-        public async Task<ProjectTask> AddTaskAsync(string projectName, string description)
+        public async Task<ProjectTask> AddTaskAsync(long projectId, string description)
         {
-            if (!_projects.TryGetValue(projectName, out var project))
+            if (!_projects.TryGetValue(projectId, out var project))
             {
-                throw new InvalidOperationException($"Project '{projectName}' not found.");
+                throw new InvalidOperationException($"Project with ID {projectId} not found.");
             }
 
-            var task = new ProjectTask(NextId(), description, projectName);
+            var task = new ProjectTask(NextTaskId(), description, project.Name);
             project.AddTask(task);
             return await Task.FromResult(task);
         }
@@ -137,12 +165,12 @@ namespace TaskList.Core.Services
                 switch (command)
                 {
                     case AddProjectCommand addProject:
-                        await AddProjectAsync(addProject.ProjectName);
-                        return new CommandResult { Success = true };
+                        var project = await AddProjectAsync(addProject.ProjectName);
+                        return new CommandResult { Success = true, Data = project };
 
                     case AddTaskCommand addTask:
-                        await AddTaskAsync(addTask.ProjectName, addTask.Description);
-                        return new CommandResult { Success = true };
+                        var task = await AddTaskAsync(addTask.ProjectId, addTask.Description);
+                        return new CommandResult { Success = true, Data = task };
 
                     case CheckTaskCommand checkTask:
                         var checkedResult = await CheckTaskAsync(checkTask.TaskId, checkTask.Checked);
@@ -175,12 +203,21 @@ namespace TaskList.Core.Services
         }
 
         /// <summary>
+        /// Generates the next available project identifier.
+        /// </summary>
+        /// <returns>The next available project identifier.</returns>
+        private long NextProjectId()
+        {
+            return ++_lastProjectId;
+        }
+
+        /// <summary>
         /// Generates the next available task identifier.
         /// </summary>
         /// <returns>The next available task identifier.</returns>
-        private long NextId()
+        private long NextTaskId()
         {
-            return ++_lastId;
+            return ++_lastTaskId;
         }
     }
 }

@@ -20,12 +20,26 @@ namespace TaskList.Core.Services
         Task<Project> AddProjectAsync(string projectName);
 
         /// <summary>
+        /// Adds a new project to the system.
+        /// </summary>
+        /// <param name="project">The project to add.</param>
+        /// <returns>A task that represents the asynchronous operation.</returns>
+        Task AddProject(Project project);
+
+        /// <summary>
+        /// Retrieves a project by its unique identifier.
+        /// </summary>
+        /// <param name="projectId">The unique identifier of the project.</param>
+        /// <returns>The project with the specified ID, or null if not found.</returns>
+        Project GetProject(long projectId);
+
+        /// <summary>
         /// Adds a new task to the specified project.
         /// </summary>
-        /// <param name="projectName">The name of the project to add the task to.</param>
+        /// <param name="projectId">The ID of the project to add the task to.</param>
         /// <param name="description">The description of the task.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the newly created task.</returns>
-        Task<ProjectTask> AddTaskAsync(string projectName, string description);
+        Task<ProjectTask> AddTaskAsync(long projectId, string description);
 
         /// <summary>
         /// Updates the completion status of a task.

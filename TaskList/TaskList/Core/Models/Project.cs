@@ -11,6 +11,11 @@ namespace TaskList.Core.Models
     public class Project
     {
         /// <summary>
+        /// Gets or sets the unique identifier of the project.
+        /// </summary>
+        public long Id { get; set; }
+
+        /// <summary>
         /// Gets the name of the project.
         /// </summary>
         public string Name { get; }
