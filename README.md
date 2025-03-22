@@ -52,7 +52,7 @@ To run the application as a web API:
 dotnet run
 ```
 
-The API will be available at `https://localhost:5001` and `http://localhost:5000`.
+The API will be available at `https://localhost:7292` and `http://localhost:5172`.
 Swagger documentation will be available at `/swagger` when running in Development mode.
 
 ### Swagger UI
