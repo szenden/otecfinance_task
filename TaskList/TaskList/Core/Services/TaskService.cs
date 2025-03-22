@@ -59,7 +59,7 @@ namespace TaskList.Core.Services
         /// <returns>The project with the specified ID, or null if not found.</returns>
         public Project GetProject(long projectId)
         {
-            return _projects.TryGetValue(projectId, out var project) ? project : null;
+            return _projects.TryGetValue(projectId, out var project) ? project : throw new InvalidOperationException($"Project with ID {projectId} not found.");
         }
 
         /// <summary>
@@ -199,7 +199,7 @@ namespace TaskList.Core.Services
         {
             return _projects.Values
                 .SelectMany(p => p.Tasks)
-                .FirstOrDefault(t => t.Id == taskId);
+                .FirstOrDefault(t => t.Id == taskId) ?? throw new InvalidOperationException($"Task with ID {taskId} not found.");
         }
 
         /// <summary>

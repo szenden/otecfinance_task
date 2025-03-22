@@ -142,26 +142,16 @@ namespace TaskList.Interfaces.Console
             }
 
             var tasksByDeadline = result.Data as IEnumerable<dynamic>;
-            foreach (var deadlineGroup in tasksByDeadline)
+            if (tasksByDeadline != null)
             {
-                if (deadlineGroup.Deadline == null)
+                foreach (var deadlineGroup in tasksByDeadline)
                 {
-                    _console.WriteLine("No deadline:");
-                }
-                else
-                {
-                    _console.WriteLine($"{deadlineGroup.Deadline:dd-MM-yyyy}:");
-                }
-
-                foreach (var projectGroup in deadlineGroup.ProjectGroups)
-                {
-                    _console.WriteLine($"    {projectGroup.ProjectName}:");
-                    foreach (var task in projectGroup.Tasks)
+                    _console.WriteLine($"\nDeadline: {deadlineGroup.Deadline?.ToString("dd-MM-yyyy") ?? "No deadline"}");
+                    foreach (var task in deadlineGroup.Tasks)
                     {
-                        _console.WriteLine($"        {task.task.Id}: {task.task.Description}");
+                        _console.WriteLine($"  {task}");
                     }
                 }
-                _console.WriteLine();
             }
         }
 

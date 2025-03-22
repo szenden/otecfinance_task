@@ -66,7 +66,7 @@ namespace TaskList.Tests
         }
 
         [Test]
-        public async Task AddTask_ToNonExistentProject_ShouldFail()
+        public void AddTask_ToNonExistentProject_ShouldFail()
         {
             // Arrange
             var nonExistentProjectId = 999;
@@ -96,16 +96,14 @@ namespace TaskList.Tests
         }
 
         [Test]
-        public async Task CheckTask_WithInvalidId_ShouldFail()
+        public void CheckTask_WithInvalidId_ShouldFail()
         {
             // Arrange
             var invalidId = 999;
 
-            // Act
-            var result = await _taskService.CheckTaskAsync(invalidId, true);
-
-            // Assert
-            Assert.That(result, Is.False);
+            // Act & Assert
+            Assert.ThrowsAsync<InvalidOperationException>(() =>
+                _taskService.CheckTaskAsync(invalidId, true));
         }
 
         [Test]
@@ -128,17 +126,15 @@ namespace TaskList.Tests
         }
 
         [Test]
-        public async Task SetDeadline_WithInvalidId_ShouldFail()
+        public void SetDeadline_WithInvalidId_ShouldFail()
         {
             // Arrange
             var invalidId = 999;
             var deadline = DateTime.Today.AddDays(1);
 
-            // Act
-            var result = await _taskService.SetDeadlineAsync(invalidId, deadline);
-
-            // Assert
-            Assert.That(result, Is.False);
+            // Act & Assert
+            Assert.ThrowsAsync<InvalidOperationException>(() =>
+                _taskService.SetDeadlineAsync(invalidId, deadline));
         }
 
         [Test]

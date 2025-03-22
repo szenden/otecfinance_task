@@ -47,11 +47,15 @@ namespace TaskList.Interfaces.Web.Controllers
         [HttpGet("{projectId}")]
         public IActionResult GetProject(long projectId)
         {
-            var project = _taskService.GetProject(projectId);
-            if (project == null)
-                return NotFound($"Project with ID {projectId} not found");
-
-            return Ok(MapToProjectDto(project));
+            try
+            {
+                var project = _taskService.GetProject(projectId);
+                return Ok(MapToProjectDto(project));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         /// <summary>
@@ -65,15 +69,20 @@ namespace TaskList.Interfaces.Web.Controllers
         [HttpGet("{projectId}/tasks/{taskId}")]
         public IActionResult GetTask(long projectId, long taskId)
         {
-            var project = _taskService.GetProject(projectId);
-            if (project == null)
-                return NotFound($"Project with ID {projectId} not found");
-
-            var task = project.GetTaskById(taskId);
-            if (task == null)
-                return NotFound($"Task with ID {taskId} not found in project {projectId}");
-
-            return Ok(MapToTaskDto(task));
+            try
+            {
+                var project = _taskService.GetProject(projectId);
+                var task = project.GetTaskById(taskId);
+                if (task == null)
+                {
+                    return NotFound($"Task with ID {taskId} not found in project {projectId}");
+                }
+                return Ok(MapToTaskDto(task));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         /// <summary>
@@ -110,28 +119,32 @@ namespace TaskList.Interfaces.Web.Controllers
         [HttpPost("{projectId}/tasks")]
         public async Task<IActionResult> CreateTask(long projectId, [FromBody] CreateTaskRequest request)
         {
-            var project = _taskService.GetProject(projectId);
-            if (project == null)
-                return NotFound($"Project with ID {projectId} not found");
-
-            var command = new AddTaskCommand(projectId, request.Description);
-            var result = await _taskService.ExecuteCommandAsync(command);
-
-            if (!result.Success)
-                return BadRequest(result.Error);
-
-            if (result.Data is not ProjectTask task)
-                return BadRequest("Failed to create task: Invalid response data");
-
-            if (request.Deadline.HasValue)
+            try
             {
-                var deadlineCommand = new SetDeadlineCommand(task.Id, request.Deadline.Value.Date);
-                var deadlineResult = await _taskService.ExecuteCommandAsync(deadlineCommand);
-                if (!deadlineResult.Success)
-                    return BadRequest("Failed to set task deadline");
-            }
+                var project = _taskService.GetProject(projectId);
+                var command = new AddTaskCommand(projectId, request.Description);
+                var result = await _taskService.ExecuteCommandAsync(command);
 
-            return CreatedAtAction(nameof(GetTask), new { projectId, taskId = task.Id }, MapToTaskDto(task));
+                if (!result.Success)
+                    return BadRequest(result.Error);
+
+                if (result.Data is not ProjectTask task)
+                    return BadRequest("Failed to create task: Invalid response data");
+
+                if (request.Deadline.HasValue)
+                {
+                    var deadlineCommand = new SetDeadlineCommand(task.Id, request.Deadline.Value.Date);
+                    var deadlineResult = await _taskService.ExecuteCommandAsync(deadlineCommand);
+                    if (!deadlineResult.Success)
+                        return BadRequest("Failed to set task deadline");
+                }
+
+                return CreatedAtAction(nameof(GetTask), new { projectId, taskId = task.Id }, MapToTaskDto(task));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         /// <summary>
@@ -144,26 +157,29 @@ namespace TaskList.Interfaces.Web.Controllers
         /// <response code="200">Returns the updated task.</response>
         /// <response code="400">If the deadline update fails.</response>
         /// <response code="404">If the project or task is not found.</response>
-        [HttpPut("{projectId}/tasks/{taskId}")]
-        public async Task<IActionResult> UpdateTaskDeadline(long projectId, long taskId, [FromQuery] DateTime? deadline)
+        [HttpPut("{projectId}/tasks/{taskId}/deadline")]
+        public async Task<IActionResult> UpdateTaskDeadline(long projectId, long taskId, [FromQuery] DateTime deadline)
         {
-            var project = _taskService.GetProject(projectId);
-            if (project == null)
-                return NotFound($"Project with ID {projectId} not found");
-
-            var task = project.GetTaskById(taskId);
-            if (task == null)
-                return NotFound($"Task with ID {taskId} not found in project {projectId}");
-
-            if (deadline.HasValue)
+            try
             {
-                var command = new SetDeadlineCommand(taskId, deadline.Value.Date);
+                var project = _taskService.GetProject(projectId);
+                var task = project.GetTaskById(taskId);
+                if (task == null)
+                {
+                    return NotFound($"Task with ID {taskId} not found in project {projectId}");
+                }
+                var command = new SetDeadlineCommand(taskId, deadline);
                 var result = await _taskService.ExecuteCommandAsync(command);
-                if (!result.Success)
-                    return BadRequest("Failed to update task deadline");
-            }
 
-            return Ok(MapToTaskDto(task));
+                if (!result.Success)
+                    return BadRequest(result.Error);
+
+                return Ok(MapToTaskDto(project.GetTaskById(taskId)));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
         }
 
         /// <summary>
@@ -177,22 +193,29 @@ namespace TaskList.Interfaces.Web.Controllers
         /// <response code="400">If the status update fails.</response>
         /// <response code="404">If the project or task is not found.</response>
         [HttpPut("{projectId}/tasks/{taskId}/check")]
-        public async Task<IActionResult> UpdateTaskStatus(long projectId, long taskId, [FromQuery] bool @checked)
+        public async Task<IActionResult> CheckTask(long projectId, long taskId, [FromQuery] bool @checked)
         {
-            var project = _taskService.GetProject(projectId);
-            if (project == null)
-                return NotFound($"Project with ID {projectId} not found");
+            try
+            {
+                var project = _taskService.GetProject(projectId);
+                var task = project.GetTaskById(taskId);
+                if (task == null)
+                {
+                    return NotFound($"Task with ID {taskId} not found in project {projectId}");
+                }
+                var command = new CheckTaskCommand(taskId, @checked);
+                var result = await _taskService.ExecuteCommandAsync(command);
 
-            var task = project.GetTaskById(taskId);
-            if (task == null)
-                return NotFound($"Task with ID {taskId} not found in project {projectId}");
+                if (!result.Success)
+                    return BadRequest(result.Error);
 
-            var command = new CheckTaskCommand(taskId, @checked);
-            var result = await _taskService.ExecuteCommandAsync(command);
-            if (!result.Success)
-                return BadRequest("Failed to update task status");
+                return Ok(MapToTaskDto(project.GetTaskById(taskId)));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return NotFound(ex.Message);
+            }
 
-            return Ok(MapToTaskDto(task));
         }
 
         /// <summary>
