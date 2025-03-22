@@ -30,6 +30,7 @@ namespace TaskList.Tests
 
             // Assert
             Assert.That(project.Name, Is.EqualTo(projectName));
+            Assert.That(project.Id, Is.GreaterThan(0));
             var projects = await _taskService.GetAllProjectsAsync();
             Assert.That(projects.Count(), Is.EqualTo(1));
         }
@@ -52,28 +53,28 @@ namespace TaskList.Tests
             // Arrange
             var projectName = "TestProject";
             var taskDescription = "Test Task";
-            await _taskService.AddProjectAsync(projectName);
+            var project = await _taskService.AddProjectAsync(projectName);
 
             // Act
-            var task = await _taskService.AddTaskAsync(projectName, taskDescription);
+            var task = await _taskService.AddTaskAsync(project.Id, taskDescription);
 
             // Assert
             Assert.That(task.Description, Is.EqualTo(taskDescription));
-            var projects = await _taskService.GetAllProjectsAsync();
-            var project = projects.First(p => p.Name == projectName);
-            Assert.That(project.Tasks, Has.Count.EqualTo(1));
+            Assert.That(task.Id, Is.GreaterThan(0));
+            var retrievedProject = _taskService.GetProject(project.Id);
+            Assert.That(retrievedProject.Tasks, Has.Count.EqualTo(1));
         }
 
         [Test]
         public async Task AddTask_ToNonExistentProject_ShouldFail()
         {
             // Arrange
-            var projectName = "NonExistentProject";
+            var nonExistentProjectId = 999;
             var taskDescription = "Test Task";
 
             // Act & Assert
             Assert.ThrowsAsync<InvalidOperationException>(() =>
-                _taskService.AddTaskAsync(projectName, taskDescription));
+                _taskService.AddTaskAsync(nonExistentProjectId, taskDescription));
         }
 
         [Test]
@@ -82,17 +83,16 @@ namespace TaskList.Tests
             // Arrange
             var projectName = "TestProject";
             var taskDescription = "Test Task";
-            await _taskService.AddProjectAsync(projectName);
-            await _taskService.AddTaskAsync(projectName, taskDescription);
+            var project = await _taskService.AddProjectAsync(projectName);
+            var task = await _taskService.AddTaskAsync(project.Id, taskDescription);
 
             // Act
-            var result = await _taskService.CheckTaskAsync(1, true);
+            var result = await _taskService.CheckTaskAsync(task.Id, true);
 
             // Assert
             Assert.That(result, Is.True);
-            var projects = await _taskService.GetAllProjectsAsync();
-            var project = projects.First(p => p.Name == projectName);
-            Assert.That(project.Tasks[0].Done, Is.True);
+            var retrievedProject = _taskService.GetProject(project.Id);
+            Assert.That(retrievedProject.Tasks[0].Done, Is.True);
         }
 
         [Test]
@@ -115,17 +115,16 @@ namespace TaskList.Tests
             var projectName = "TestProject";
             var taskDescription = "Test Task";
             var deadline = DateTime.Today.AddDays(1);
-            await _taskService.AddProjectAsync(projectName);
-            await _taskService.AddTaskAsync(projectName, taskDescription);
+            var project = await _taskService.AddProjectAsync(projectName);
+            var task = await _taskService.AddTaskAsync(project.Id, taskDescription);
 
             // Act
-            var result = await _taskService.SetDeadlineAsync(1, deadline);
+            var result = await _taskService.SetDeadlineAsync(task.Id, deadline);
 
             // Assert
             Assert.That(result, Is.True);
-            var projects = await _taskService.GetAllProjectsAsync();
-            var project = projects.First(p => p.Name == projectName);
-            Assert.That(project.Tasks[0].Deadline, Is.EqualTo(deadline));
+            var retrievedProject = _taskService.GetProject(project.Id);
+            Assert.That(retrievedProject.Tasks[0].Deadline, Is.EqualTo(deadline));
         }
 
         [Test]
@@ -147,18 +146,18 @@ namespace TaskList.Tests
         {
             // Arrange
             var projectName = "TestProject";
-            await _taskService.AddProjectAsync(projectName);
-            await _taskService.AddTaskAsync(projectName, "Task 1");
-            await _taskService.AddTaskAsync(projectName, "Task 2");
-            await _taskService.AddTaskAsync(projectName, "Task 3");
+            var project = await _taskService.AddProjectAsync(projectName);
+            var task1 = await _taskService.AddTaskAsync(project.Id, "Task 1");
+            var task2 = await _taskService.AddTaskAsync(project.Id, "Task 2");
+            var task3 = await _taskService.AddTaskAsync(project.Id, "Task 3");
 
             var today = DateTime.Today;
             var tomorrow = today.AddDays(1);
             var nextWeek = today.AddDays(7);
 
-            await _taskService.SetDeadlineAsync(1, today);
-            await _taskService.SetDeadlineAsync(2, tomorrow);
-            await _taskService.SetDeadlineAsync(3, nextWeek);
+            await _taskService.SetDeadlineAsync(task1.Id, today);
+            await _taskService.SetDeadlineAsync(task2.Id, tomorrow);
+            await _taskService.SetDeadlineAsync(task3.Id, nextWeek);
 
             // Act
             var todayTasks = await _taskService.GetTasksByDeadlineAsync(today);
@@ -176,18 +175,18 @@ namespace TaskList.Tests
         {
             // Arrange
             var projectName = "TestProject";
-            await _taskService.AddProjectAsync(projectName);
-            await _taskService.AddTaskAsync(projectName, "Today's Task");
-            await _taskService.AddTaskAsync(projectName, "Tomorrow's Task");
-            await _taskService.AddTaskAsync(projectName, "Next Week's Task");
+            var project = await _taskService.AddProjectAsync(projectName);
+            var task1 = await _taskService.AddTaskAsync(project.Id, "Today's Task");
+            var task2 = await _taskService.AddTaskAsync(project.Id, "Tomorrow's Task");
+            var task3 = await _taskService.AddTaskAsync(project.Id, "Next Week's Task");
 
             var today = DateTime.Today;
             var tomorrow = today.AddDays(1);
             var nextWeek = today.AddDays(7);
 
-            await _taskService.SetDeadlineAsync(1, today);
-            await _taskService.SetDeadlineAsync(2, tomorrow);
-            await _taskService.SetDeadlineAsync(3, nextWeek);
+            await _taskService.SetDeadlineAsync(task1.Id, today);
+            await _taskService.SetDeadlineAsync(task2.Id, tomorrow);
+            await _taskService.SetDeadlineAsync(task3.Id, nextWeek);
 
             // Act
             var todayTasks = await _taskService.GetTasksForTodayAsync();

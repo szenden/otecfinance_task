@@ -39,6 +39,7 @@ namespace TaskList.Tests
             var projects = await _taskService.GetAllProjectsAsync();
             Assert.That(projects.Count(), Is.EqualTo(1));
             Assert.That(projects.First().Name, Is.EqualTo("TestProject"));
+            Assert.That(projects.First().Id, Is.GreaterThan(0));
         }
 
         [Test]
@@ -46,19 +47,19 @@ namespace TaskList.Tests
         {
             // Arrange
             var projectName = "TestProject";
+            var project = await _taskService.AddProjectAsync(projectName);
             var taskDescription = "Test Task";
-            await _taskService.AddProjectAsync(projectName);
-            var command = new AddTaskCommand(projectName, taskDescription);
+            var command = new AddTaskCommand(project.Id, taskDescription);
 
             // Act
             var result = await _taskService.ExecuteCommandAsync(command);
 
             // Assert
             Assert.That(result.Success, Is.True);
-            var projects = await _taskService.GetAllProjectsAsync();
-            var project = projects.First(p => p.Name == projectName);
-            Assert.That(project.Tasks.Count, Is.EqualTo(1));
-            Assert.That(project.Tasks[0].Description, Is.EqualTo(taskDescription));
+            var retrievedProject = _taskService.GetProject(project.Id);
+            Assert.That(retrievedProject.Tasks.Count, Is.EqualTo(1));
+            Assert.That(retrievedProject.Tasks[0].Description, Is.EqualTo(taskDescription));
+            Assert.That(retrievedProject.Tasks[0].Id, Is.GreaterThan(0));
         }
 
         [Test]
@@ -66,19 +67,17 @@ namespace TaskList.Tests
         {
             // Arrange
             var projectName = "TestProject";
-            var taskDescription = "Test Task";
-            await _taskService.AddProjectAsync(projectName);
-            await _taskService.AddTaskAsync(projectName, taskDescription);
-            var command = new CheckTaskCommand(1, true);
+            var project = await _taskService.AddProjectAsync(projectName);
+            var task = await _taskService.AddTaskAsync(project.Id, "Test Task");
+            var command = new CheckTaskCommand(task.Id, true);
 
             // Act
             var result = await _taskService.ExecuteCommandAsync(command);
 
             // Assert
             Assert.That(result.Success, Is.True);
-            var projects = await _taskService.GetAllProjectsAsync();
-            var project = projects.First(p => p.Name == projectName);
-            Assert.That(project.Tasks[0].Done, Is.True);
+            var retrievedProject = _taskService.GetProject(project.Id);
+            Assert.That(retrievedProject.Tasks[0].Done, Is.True);
         }
 
         [Test]
@@ -86,20 +85,18 @@ namespace TaskList.Tests
         {
             // Arrange
             var projectName = "TestProject";
-            var taskDescription = "Test Task";
+            var project = await _taskService.AddProjectAsync(projectName);
+            var task = await _taskService.AddTaskAsync(project.Id, "Test Task");
             var deadline = DateTime.Today.AddDays(1);
-            await _taskService.AddProjectAsync(projectName);
-            await _taskService.AddTaskAsync(projectName, taskDescription);
-            var command = new SetDeadlineCommand(1, deadline);
+            var command = new SetDeadlineCommand(task.Id, deadline);
 
             // Act
             var result = await _taskService.ExecuteCommandAsync(command);
 
             // Assert
             Assert.That(result.Success, Is.True);
-            var projects = await _taskService.GetAllProjectsAsync();
-            var project = projects.First(p => p.Name == projectName);
-            Assert.That(project.Tasks[0].Deadline, Is.EqualTo(deadline));
+            var retrievedProject = _taskService.GetProject(project.Id);
+            Assert.That(retrievedProject.Tasks[0].Deadline, Is.EqualTo(deadline));
         }
 
         [Test]
@@ -107,10 +104,10 @@ namespace TaskList.Tests
         {
             // Arrange
             var projectName = "TestProject";
-            await _taskService.AddProjectAsync(projectName);
-            await _taskService.AddTaskAsync(projectName, "Task 1");
-            await _taskService.AddTaskAsync(projectName, "Task 2");
-            await _taskService.CheckTaskAsync(1, true);
+            var project = await _taskService.AddProjectAsync(projectName);
+            var task1 = await _taskService.AddTaskAsync(project.Id, "Task 1");
+            var task2 = await _taskService.AddTaskAsync(project.Id, "Task 2");
+            await _taskService.CheckTaskAsync(task1.Id, true);
             var command = new AddProjectCommand("show"); // Using AddProjectCommand as a placeholder for show command
 
             // Act
@@ -120,10 +117,10 @@ namespace TaskList.Tests
             Assert.That(result.Success, Is.True);
             var projects = await _taskService.GetAllProjectsAsync();
             Assert.That(projects.Count(), Is.EqualTo(2)); // Including the "show" project
-            var project = projects.First(p => p.Name == projectName);
-            Assert.That(project.Tasks.Count, Is.EqualTo(2));
-            Assert.That(project.Tasks[0].Done, Is.True);
-            Assert.That(project.Tasks[1].Done, Is.False);
+            var retrievedProject = _taskService.GetProject(project.Id);
+            Assert.That(retrievedProject.Tasks.Count, Is.EqualTo(2));
+            Assert.That(retrievedProject.Tasks[0].Done, Is.True);
+            Assert.That(retrievedProject.Tasks[1].Done, Is.False);
         }
 
         [Test]
@@ -131,11 +128,11 @@ namespace TaskList.Tests
         {
             // Arrange
             var projectName = "TestProject";
-            await _taskService.AddProjectAsync(projectName);
-            await _taskService.AddTaskAsync(projectName, "Today's Task");
-            await _taskService.AddTaskAsync(projectName, "Tomorrow's Task");
-            await _taskService.SetDeadlineAsync(1, DateTime.Today);
-            await _taskService.SetDeadlineAsync(2, DateTime.Today.AddDays(1));
+            var project = await _taskService.AddProjectAsync(projectName);
+            var task1 = await _taskService.AddTaskAsync(project.Id, "Today's Task");
+            var task2 = await _taskService.AddTaskAsync(project.Id, "Tomorrow's Task");
+            await _taskService.SetDeadlineAsync(task1.Id, DateTime.Today);
+            await _taskService.SetDeadlineAsync(task2.Id, DateTime.Today.AddDays(1));
             var command = new AddProjectCommand("today"); // Using AddProjectCommand as a placeholder for today command
 
             // Act
@@ -145,10 +142,10 @@ namespace TaskList.Tests
             Assert.That(result.Success, Is.True);
             var projects = await _taskService.GetAllProjectsAsync();
             Assert.That(projects.Count(), Is.EqualTo(2)); // Including the "today" project
-            var project = projects.First(p => p.Name == projectName);
-            Assert.That(project.Tasks.Count, Is.EqualTo(2));
-            Assert.That(project.Tasks[0].Deadline, Is.EqualTo(DateTime.Today));
-            Assert.That(project.Tasks[1].Deadline, Is.EqualTo(DateTime.Today.AddDays(1)));
+            var retrievedProject = _taskService.GetProject(project.Id);
+            Assert.That(retrievedProject.Tasks.Count, Is.EqualTo(2));
+            Assert.That(retrievedProject.Tasks[0].Deadline, Is.EqualTo(DateTime.Today));
+            Assert.That(retrievedProject.Tasks[1].Deadline, Is.EqualTo(DateTime.Today.AddDays(1)));
         }
 
         [Test]
@@ -156,13 +153,13 @@ namespace TaskList.Tests
         {
             // Arrange
             var projectName = "TestProject";
-            await _taskService.AddProjectAsync(projectName);
-            await _taskService.AddTaskAsync(projectName, "Task 1");
-            await _taskService.AddTaskAsync(projectName, "Task 2");
-            await _taskService.AddTaskAsync(projectName, "Task 3");
-            await _taskService.SetDeadlineAsync(1, DateTime.Today);
-            await _taskService.SetDeadlineAsync(2, DateTime.Today.AddDays(1));
-            await _taskService.SetDeadlineAsync(3, DateTime.Today.AddDays(7));
+            var project = await _taskService.AddProjectAsync(projectName);
+            var task1 = await _taskService.AddTaskAsync(project.Id, "Task 1");
+            var task2 = await _taskService.AddTaskAsync(project.Id, "Task 2");
+            var task3 = await _taskService.AddTaskAsync(project.Id, "Task 3");
+            await _taskService.SetDeadlineAsync(task1.Id, DateTime.Today);
+            await _taskService.SetDeadlineAsync(task2.Id, DateTime.Today.AddDays(1));
+            await _taskService.SetDeadlineAsync(task3.Id, DateTime.Today.AddDays(7));
             var command = new AddProjectCommand("view-by-deadline"); // Using AddProjectCommand as a placeholder for view-by-deadline command
 
             // Act
@@ -172,11 +169,11 @@ namespace TaskList.Tests
             Assert.That(result.Success, Is.True);
             var projects = await _taskService.GetAllProjectsAsync();
             Assert.That(projects.Count(), Is.EqualTo(2)); // Including the "view-by-deadline" project
-            var project = projects.First(p => p.Name == projectName);
-            Assert.That(project.Tasks.Count, Is.EqualTo(3));
-            Assert.That(project.Tasks[0].Deadline, Is.EqualTo(DateTime.Today));
-            Assert.That(project.Tasks[1].Deadline, Is.EqualTo(DateTime.Today.AddDays(1)));
-            Assert.That(project.Tasks[2].Deadline, Is.EqualTo(DateTime.Today.AddDays(7)));
+            var retrievedProject = _taskService.GetProject(project.Id);
+            Assert.That(retrievedProject.Tasks.Count, Is.EqualTo(3));
+            Assert.That(retrievedProject.Tasks[0].Deadline, Is.EqualTo(DateTime.Today));
+            Assert.That(retrievedProject.Tasks[1].Deadline, Is.EqualTo(DateTime.Today.AddDays(1)));
+            Assert.That(retrievedProject.Tasks[2].Deadline, Is.EqualTo(DateTime.Today.AddDays(7)));
         }
 
         [Test]
