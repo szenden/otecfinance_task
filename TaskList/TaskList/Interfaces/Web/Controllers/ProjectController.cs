@@ -212,19 +212,39 @@ namespace TaskList.Interfaces.Web.Controllers
                 .Select(g => new
                 {
                     Deadline = g.Key,
-                    Tasks = g.Select(t => new
-                    {
-                        t.Id,
-                        t.Description,
-                        t.Done,
-                        ProjectName = t.ProjectName
-                    }).ToList()
+                    Tasks = g.Select(MapToTaskDto).ToList()
                 })
                 .ToList();
 
             return Ok(tasksByDeadline);
         }
 
+        /// <summary>
+        /// Retrieves tasks filtered by their deadline.
+        /// </summary>
+        /// <param name="deadline">The deadline to filter tasks by. If not provided, defaults to the current day.</param>
+        /// <returns>A list of tasks with the specified deadline.</returns>
+        /// <response code="200">Returns the filtered tasks.</response>
+        [HttpGet("tasks/by-deadline")]
+        public async Task<IActionResult> GetTasksBySpecificDeadline([FromQuery] DateTime? deadline = null)
+        {
+            var targetDate = deadline?.Date ?? DateTime.Today;
+            var allProjects = await _taskService.GetAllProjectsAsync();
+
+            var tasks = allProjects
+                .SelectMany(p => p.Tasks)
+                .Where(t => t.Deadline?.Date == targetDate)
+                .Select(MapToTaskDto)
+                .ToList();
+
+            return Ok(tasks);
+        }
+
+        /// <summary>
+        /// Maps a Project entity to a ProjectDto.
+        /// </summary>
+        /// <param name="project">The project entity to map.</param>
+        /// <returns>A ProjectDto containing the mapped project data.</returns>
         private static ProjectDto MapToProjectDto(Project project)
         {
             return new ProjectDto
@@ -235,6 +255,11 @@ namespace TaskList.Interfaces.Web.Controllers
             };
         }
 
+        /// <summary>
+        /// Maps a ProjectTask entity to a TaskDto.
+        /// </summary>
+        /// <param name="task">The task entity to map.</param>
+        /// <returns>A TaskDto containing the mapped task data.</returns>
         private static TaskDto MapToTaskDto(ProjectTask task)
         {
             return new TaskDto
