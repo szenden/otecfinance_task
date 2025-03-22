@@ -7,11 +7,21 @@ using TaskList.Core.Models.Commands;
 
 namespace TaskList.Core.Services
 {
+    /// <summary>
+    /// Implementation of the ITaskService interface that provides task management functionality.
+    /// Manages projects and tasks in memory using a dictionary-based storage system.
+    /// </summary>
     public class TaskService : ITaskService
     {
         private readonly IDictionary<string, Project> _projects = new Dictionary<string, Project>();
         private long _lastId = 0;
 
+        /// <summary>
+        /// Creates a new project with the specified name.
+        /// </summary>
+        /// <param name="projectName">The name of the project to create.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the newly created project.</returns>
+        /// <exception cref="InvalidOperationException">Thrown when a project with the same name already exists.</exception>
         public async Task<Project> AddProjectAsync(string projectName)
         {
             if (_projects.ContainsKey(projectName))
@@ -24,6 +34,13 @@ namespace TaskList.Core.Services
             return await Task.FromResult(project);
         }
 
+        /// <summary>
+        /// Adds a new task to the specified project.
+        /// </summary>
+        /// <param name="projectName">The name of the project to add the task to.</param>
+        /// <param name="description">The description of the task.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the newly created task.</returns>
+        /// <exception cref="InvalidOperationException">Thrown when the specified project does not exist.</exception>
         public async Task<ProjectTask> AddTaskAsync(string projectName, string description)
         {
             if (!_projects.TryGetValue(projectName, out var project))
@@ -36,6 +53,12 @@ namespace TaskList.Core.Services
             return await Task.FromResult(task);
         }
 
+        /// <summary>
+        /// Updates the completion status of a task.
+        /// </summary>
+        /// <param name="taskId">The unique identifier of the task.</param>
+        /// <param name="checked">The new completion status of the task.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result indicates whether the update was successful.</returns>
         public async Task<bool> CheckTaskAsync(long taskId, bool @checked)
         {
             var task = FindTaskById(taskId);
@@ -48,6 +71,12 @@ namespace TaskList.Core.Services
             return await Task.FromResult(true);
         }
 
+        /// <summary>
+        /// Sets a deadline for a specific task.
+        /// </summary>
+        /// <param name="taskId">The unique identifier of the task.</param>
+        /// <param name="deadline">The deadline to set for the task.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result indicates whether the deadline was set successfully.</returns>
         public async Task<bool> SetDeadlineAsync(long taskId, DateTime deadline)
         {
             var task = FindTaskById(taskId);
@@ -60,11 +89,20 @@ namespace TaskList.Core.Services
             return await Task.FromResult(true);
         }
 
+        /// <summary>
+        /// Retrieves all projects in the system.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a collection of all projects.</returns>
         public async Task<IEnumerable<Project>> GetAllProjectsAsync()
         {
             return await Task.FromResult(_projects.Values);
         }
 
+        /// <summary>
+        /// Retrieves tasks that have a specific deadline.
+        /// </summary>
+        /// <param name="deadline">The deadline to filter tasks by. If null, returns all tasks.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a collection of tasks matching the deadline criteria.</returns>
         public async Task<IEnumerable<ProjectTask>> GetTasksByDeadlineAsync(DateTime? deadline)
         {
             var tasks = _projects.Values
@@ -73,6 +111,10 @@ namespace TaskList.Core.Services
             return await Task.FromResult(tasks);
         }
 
+        /// <summary>
+        /// Retrieves tasks that are due today.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous operation. The task result contains a collection of tasks due today.</returns>
         public async Task<IEnumerable<ProjectTask>> GetTasksForTodayAsync()
         {
             var today = DateTime.Today;
@@ -82,6 +124,12 @@ namespace TaskList.Core.Services
             return await Task.FromResult(tasks);
         }
 
+        /// <summary>
+        /// Executes a command on the task service.
+        /// </summary>
+        /// <param name="command">The command to execute.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the result of the command execution.</returns>
+        /// <exception cref="Exception">Thrown when command execution fails.</exception>
         public async Task<CommandResult> ExecuteCommandAsync(BaseCommand command)
         {
             try
@@ -114,6 +162,11 @@ namespace TaskList.Core.Services
             }
         }
 
+        /// <summary>
+        /// Finds a task by its unique identifier across all projects.
+        /// </summary>
+        /// <param name="taskId">The unique identifier of the task to find.</param>
+        /// <returns>The found task, or null if no task with the specified ID exists.</returns>
         private ProjectTask FindTaskById(long taskId)
         {
             return _projects.Values
@@ -121,6 +174,10 @@ namespace TaskList.Core.Services
                 .FirstOrDefault(t => t.Id == taskId);
         }
 
+        /// <summary>
+        /// Generates the next available task identifier.
+        /// </summary>
+        /// <returns>The next available task identifier.</returns>
         private long NextId()
         {
             return ++_lastId;
