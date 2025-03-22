@@ -105,7 +105,7 @@ namespace TaskList.Core.Services
                         return new CommandResult { Success = deadlineResult };
 
                     default:
-                        return new CommandResult { Success = false, Error = "Unknown command type" };
+                        return new CommandResult { Success = false, Error = "Unknown command type: " + command.GetType().Name };
                 }
             }
             catch (Exception ex)

@@ -9,6 +9,11 @@ using System.Linq;
 
 namespace TaskList.Tests
 {
+    public class InvalidCommand : BaseCommand
+    {
+        public InvalidCommand() : base("invalid_command_type") { }
+    }
+
     [TestFixture]
     public class CommandTests
     {
@@ -178,14 +183,14 @@ namespace TaskList.Tests
         public async Task InvalidCommand_ShouldReturnError()
         {
             // Arrange
-            var command = new AddProjectCommand("invalid"); // Using AddProjectCommand as a placeholder for invalid command
+            var command = new InvalidCommand();
 
             // Act
             var result = await _taskService.ExecuteCommandAsync(command);
 
             // Assert
-            Assert.That(result.Success, Is.True); // Changed to True to match expected value
-            Assert.That(result.Error, Is.EqualTo("Unknown command: invalid"));
+            Assert.That(result.Success, Is.False);
+            Assert.That(result.Error, Is.EqualTo("Unknown command type: InvalidCommand"));
         }
     }
 }
