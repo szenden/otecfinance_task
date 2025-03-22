@@ -17,5 +17,19 @@ namespace TaskList.Core.Models
             ProjectName = projectName;
             Done = false;
         }
+
+        public override string ToString()
+        {
+            var result = $"{Id}: {Description}";
+            if (Deadline.HasValue)
+            {
+                result += $", {Deadline.Value:dd-MM-yyyy}";
+            }
+            if (Done)
+            {
+                result += " [x]";
+            }
+            return result;
+        }
     }
 }

@@ -119,7 +119,7 @@ namespace TaskList.Tests
         {
             // Arrange
             var task = new ProjectTask(1, "Test Task", "TestProject");
-            task.Deadline = DateTime.Today;
+            task.Deadline = new DateTime(2024, 1, 1);
 
             // Act
             var result = task.ToString();
@@ -138,7 +138,8 @@ namespace TaskList.Tests
             var result = task.ToString();
 
             // Assert
-            Assert.That(result, Is.EqualTo("1: Test Task"));
+            var expected = $"{task.Id}: {task.Description}";
+            Assert.That(result, Is.EqualTo(expected));
         }
 
         [Test]
