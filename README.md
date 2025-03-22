@@ -55,6 +55,12 @@ dotnet run
 The API will be available at `https://localhost:5001` and `http://localhost:5000`.
 Swagger documentation will be available at `/swagger` when running in Development mode.
 
+### Swagger UI
+
+The Swagger UI provides interactive documentation for all available API endpoints:
+
+![Swagger UI](docs/swagger-ui.png)
+
 ## Testing
 
 The project includes comprehensive tests covering:
