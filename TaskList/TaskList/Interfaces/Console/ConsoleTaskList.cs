@@ -81,12 +81,27 @@ namespace TaskList.Interfaces.Console
                     await ShowTodayTasksAsync();
                     break;
                 case "view-by-deadline":
-                    await ShowTasksByDeadlineAsync();
+                    await ShowTasksByDeadlineAsync(result.Data as IEnumerable<dynamic>);
                     break;
                 case "help":
                     _console.WriteLine(result.Data as string);
                     break;
             }
+        }
+
+        /// <summary>
+        /// Formats a task for display with its completion status, ID, description, and deadline.
+        /// </summary>
+        /// <param name="task">The task to format.</param>
+        /// <returns>A formatted string representation of the task.</returns>
+        private string FormatTaskForDisplay(ProjectTask task)
+        {
+            return string.Format("    [{0}] {1}: {2}{3}",
+                (task.Done ? 'x' : ' '),
+                task.Id,
+                task.Description,
+                task.Deadline.HasValue ? $", {task.Deadline.Value:dd-MM-yyyy}" : ""
+            );
         }
 
         /// <summary>
@@ -101,7 +116,7 @@ namespace TaskList.Interfaces.Console
                 _console.WriteLine(project.Name);
                 foreach (var task in project.Tasks)
                 {
-                    _console.WriteLine("    [{0}] {1}: {2}{3}", (task.Done ? 'x' : ' '), task.Id, task.Description, task.Deadline.HasValue ? $", {task.Deadline.Value:dd-MM-yyyy}" : "");
+                    _console.WriteLine(FormatTaskForDisplay(task));
                 }
                 _console.WriteLine();
             }
@@ -119,7 +134,7 @@ namespace TaskList.Interfaces.Console
             foreach (var task in tasks)
             {
                 hasTasks = true;
-                _console.WriteLine("    [{0}] {1}: {2}{3}", (task.Done ? 'x' : ' '), task.Id, task.Description, task.Deadline.HasValue ? $", {task.Deadline.Value:dd-MM-yyyy}" : "");
+                _console.WriteLine(FormatTaskForDisplay(task));
             }
 
             if (!hasTasks)
@@ -131,17 +146,10 @@ namespace TaskList.Interfaces.Console
         /// <summary>
         /// Displays all tasks grouped by their deadlines in a formatted manner.
         /// </summary>
+        /// <param name="tasksByDeadline">The tasks grouped by deadline.</param>
         /// <returns>A task that represents the asynchronous operation.</returns>
-        private async Task ShowTasksByDeadlineAsync()
+        private async Task ShowTasksByDeadlineAsync(IEnumerable<dynamic> tasksByDeadline)
         {
-            var result = await _commandProcessor.ProcessCommandAsync("view-by-deadline");
-            if (!result.Success)
-            {
-                _console.WriteLine(result.Error);
-                return;
-            }
-
-            var tasksByDeadline = result.Data as IEnumerable<dynamic>;
             if (tasksByDeadline != null)
             {
                 foreach (var deadlineGroup in tasksByDeadline)
