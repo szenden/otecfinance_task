@@ -81,7 +81,7 @@ namespace TaskList.Interfaces.Console
                     await ShowTodayTasksAsync();
                     break;
                 case "view-by-deadline":
-                    await ShowTasksByDeadlineAsync(result.Data as IEnumerable<dynamic>);
+                    ShowTasksByDeadlineAsync(result.Data as IEnumerable<dynamic>);
                     break;
                 case "help":
                     _console.WriteLine(result.Data as string);
@@ -147,17 +147,20 @@ namespace TaskList.Interfaces.Console
         /// Displays all tasks grouped by their deadlines in a formatted manner.
         /// </summary>
         /// <param name="tasksByDeadline">The tasks grouped by deadline.</param>
-        /// <returns>A task that represents the asynchronous operation.</returns>
-        private async Task ShowTasksByDeadlineAsync(IEnumerable<dynamic> tasksByDeadline)
+        private void ShowTasksByDeadlineAsync(IEnumerable<dynamic> tasksByDeadline)
         {
             if (tasksByDeadline != null)
             {
                 foreach (var deadlineGroup in tasksByDeadline)
                 {
                     _console.WriteLine($"\nDeadline: {deadlineGroup.Deadline?.ToString("dd-MM-yyyy") ?? "No deadline"}");
-                    foreach (var task in deadlineGroup.Tasks)
+                    foreach (var projectGroup in deadlineGroup.ProjectGroups)
                     {
-                        _console.WriteLine($"  {task}");
+                        _console.WriteLine($"  {projectGroup.ProjectName}:");
+                        foreach (var task in projectGroup.Tasks)
+                        {
+                            _console.WriteLine(FormatTaskForDisplay((ProjectTask)task.task));
+                        }
                     }
                 }
             }
