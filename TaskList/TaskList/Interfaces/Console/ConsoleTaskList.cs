@@ -84,7 +84,7 @@ namespace TaskList.Interfaces.Console
                     await ShowTasksByDeadlineAsync();
                     break;
                 case "help":
-                    ShowHelp();
+                    _console.WriteLine(result.Data as string);
                     break;
             }
         }
@@ -153,23 +153,6 @@ namespace TaskList.Interfaces.Console
                     }
                 }
             }
-        }
-
-        /// <summary>
-        /// Displays the help text showing all available commands.
-        /// </summary>
-        private void ShowHelp()
-        {
-            _console.WriteLine("Commands:");
-            _console.WriteLine("  show");
-            _console.WriteLine("  add project <project name>");
-            _console.WriteLine("  add task <project name> <task description>");
-            _console.WriteLine("  check <task ID>");
-            _console.WriteLine("  uncheck <task ID>");
-            _console.WriteLine("  deadline <task ID> <date>");
-            _console.WriteLine("  today");
-            _console.WriteLine("  view-by-deadline");
-            _console.WriteLine();
         }
     }
 }
